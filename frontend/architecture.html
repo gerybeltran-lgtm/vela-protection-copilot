@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arquitectura del Software | Vela Protection Copilot (Acceso Privado)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #0B0F17; color: #F3F4F6; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-card { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glow-amber { box-shadow: 0 0 30px -5px rgba(245, 158, 11, 0.25); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Modal de Protección de Clave de Administrador -->
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-gray-950/90 backdrop-blur-lg flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-8 rounded-3xl border border-amber-500/30 text-center space-y-6 shadow-2xl">
+            <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center text-2xl mx-auto shadow-lg">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-white">Acceso Restringido (IP Protegida)</h2>
+                <p class="text-xs text-gray-400 mt-1">El diagrama de arquitectura técnica de Vela Copilot es confidencial para administradores de E-Voltage.</p>
+            </div>
+            <div class="space-y-3">
+                <input type="password" id="input-admin-pass" placeholder="Ingresa la clave de Administrador" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-center text-gray-200 focus:border-amber-500 focus:outline-none font-mono">
+                <button type="button" onclick="verifyAdminPass()" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold rounded-xl text-xs transition shadow-lg">
+                    Desbloquear Especificación Técnica
+                </button>
+            </div>
+            <p id="txt-pass-error" class="text-xs text-red-400 hidden font-mono">Clave incorrecta. Acceso denegado.</p>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-gray-800 bg-gray-900/80 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-gray-950 font-bold shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-layer-group text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        VELA <span class="text-amber-500 font-medium">PROTECTION COPILOT</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">Especificación Técnica de Arquitectura Multi-Agente (Uso Interno)</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/index.html" class="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-950 flex items-center gap-2 transition shadow-lg">
+                    <i class="fa-solid fa-play"></i> Ir a la Aplicación en Vivo
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Content Privado -->
+    <main id="private-content" class="flex-1 max-w-7xl w-full mx-auto px-6 py-10 space-y-12 blur-sm pointer-events-none">
+        
+        <!-- Hero Section -->
+        <section class="text-center space-y-4 max-w-3xl mx-auto">
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                Arquitectura Privada Multi-Agente Determinista & Multi-Fuente
+            </span>
+            <h1 class="text-4xl font-extrabold text-white tracking-tight">
+                El Departamento Autónomo de <span class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Ingeniería de Protecciones</span>
+            </h1>
+            <p class="text-gray-400 text-sm leading-relaxed">
+                Vela Protection Copilot audita desde la **simulación de origen en DIgSILENT PowerFactory**, el informe PDF del ECAP, los planos unilineales y las normativas en línea del **Coordinador Eléctrico Nacional (CEN)**.
+            </p>
+        </section>
+
+        <!-- Diagrama Interactivo Mermaid -->
+        <section class="glass-card rounded-3xl p-8 shadow-2xl glow-amber space-y-6 border border-amber-500/20">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-diagram-project text-amber-500"></i> Diagrama de Flujo Multi-Agente & Debate Técnico
+                    </h2>
+                    <p class="text-xs text-gray-400">Interacción entre fuentes de origen, subagentes de deliberación y salidas certificadas.</p>
+                </div>
+                <span class="text-xs font-mono text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">Pipeline Asíncrono Propietario</span>
+            </div>
+
+            <div class="mermaid text-center bg-gray-950/60 p-6 rounded-2xl border border-gray-850 overflow-x-auto">
+                graph TD
+                    classDef inputStyle fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff;
+                    classDef agentStyle fill:#111827,stroke:#f59e0b,stroke-width:2px,color:#fff;
+                    classDef regStyle fill:#311b92,stroke:#7c4dff,stroke-width:2px,color:#fff;
+                    classDef engineStyle fill:#1f1906,stroke:#f97316,stroke-width:2px,color:#fff;
+                    classDef outputStyle fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff;
+
+                    IN1[⚡ Archivo DIgSILENT PowerFactory .dz / .json]:::inputStyle
+                    IN2[📄 PDF Informe ECAP / Memoria]:::inputStyle
+                    IN3[📐 Diagrama Unilineal SDU / CAD]:::inputStyle
+                    IN4[📚 Documentos & Links de Reglas Personalizadas]:::inputStyle
+
+                    ORQ[🤖 Agente Orquestador & Integrador]:::agentStyle
+
+                    IN1 --> ORQ
+                    IN2 --> ORQ
+                    IN3 --> ORQ
+                    IN4 --> ORQ
+
+                    subgraph DEBATE["Mesa de Deliberación Multi-Agente"]
+                        A0[⚡ Subagente DIgSILENT PowerFactory<br/>Audita la simulación de origen]:::agentStyle
+                        A1[🤖 Subagente Topología & Unilineal<br/>Valida cruce SDU vs ECAP]:::agentStyle
+                        A2[🤖 Subagente Auditor de ECAP<br/>Valida RTCs y curvas IEEE/IEC]:::agentStyle
+                        A3[🤖 Subagente Hardware Relé - RAG<br/>Consulta manuales GE/SEL/Siemens]:::agentStyle
+                        A5[🏛️ Subagente Normativa CEN & NTyCS<br/>Live Regulatory RAG - 110/220kV]:::regStyle
+                    end
+
+                    ORQ --> A0
+                    ORQ --> A1
+                    ORQ --> A2
+                    ORQ --> A3
+                    ORQ --> A5
+
+                    A0 <--> A2
+                    A1 <--> A2
+                    A2 <--> A3
+                    A3 <--> A5
+
+                    QA[🛡️ Agente QA, Dictamen Final & Safety Lock]:::engineStyle
+                    A0 --> QA
+                    A1 --> QA
+                    A2 --> QA
+                    A3 --> QA
+                    A5 --> QA
+
+                    OUT1[📑 Informe RFI & Certificado PDF]:::outputStyle
+                    OUT2[💾 Archivo CSV EnerVista / GE]:::outputStyle
+                    OUT3[⚡ Archivo .SEC AcSELerator / SEL]:::outputStyle
+                    OUT4[🎯 Archivo .XRIO OMICRON Test]:::outputStyle
+
+                    QA --> OUT1
+                    QA --> OUT2
+                    QA --> OUT3
+                    QA --> OUT4
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 bg-gray-900/40 py-6 text-center text-xs text-gray-500">
+        Vela Protection Copilot &copy; 2026 E-Voltage & Vela Agency. Todos los derechos reservados.
+    </footer>
+
+    <script>
+        const ADMIN_PASS = "EVOLTAGE2026";
+
+        function checkAuth() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyParam = urlParams.get('key');
+            const savedKey = localStorage.getItem('vela_admin_key');
+
+            if (keyParam === ADMIN_PASS || savedKey === ADMIN_PASS) {
+                unlockContent();
+            }
+        }
+
+        function verifyAdminPass() {
+            const val = document.getElementById('input-admin-pass').value.trim();
+            if (val === ADMIN_PASS) {
+                localStorage.setItem('vela_admin_key', ADMIN_PASS);
+                unlockContent();
+            } else {
+                document.getElementById('txt-pass-error').classList.remove('hidden');
+            }
+        }
+
+        function unlockContent() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            const content = document.getElementById('private-content');
+            content.classList.remove('blur-sm', 'pointer-events-none');
+            mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+        }
+
+        checkAuth();
+    </script>
+</body>
+</html>

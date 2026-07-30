@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vela Protection Copilot | E-Voltage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #0B0F17; color: #F3F4F6; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .badge-critical { background: rgba(239, 68, 68, 0.15); color: #FCA5A5; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: #FDE047; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-approved { background: rgba(16, 185, 129, 0.15); color: #6EE7B7; border: 1px solid rgba(16, 185, 129, 0.3); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Contenedor de Notificaciones Toast 2026 -->
+    <div id="toast-container" class="fixed top-20 right-6 z-[9999] space-y-3 pointer-events-none"></div>
+
+    <!-- Modal de Autenticación Restringida / Licencia SaaS -->
+    <div id="app-auth-modal" class="fixed inset-0 z-50 bg-gray-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-8 rounded-3xl border border-amber-500/40 text-center space-y-6 shadow-2xl">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 border border-amber-400/40 text-gray-950 flex items-center justify-center text-2xl mx-auto shadow-lg shadow-amber-500/20">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-extrabold text-white">Vela Protection Agent</h2>
+                <p class="text-xs text-amber-400 font-semibold tracking-wide uppercase mt-1">Suite Vela Ingeniería &bull; Acceso Empresarial Privado</p>
+                <p class="text-xs text-gray-400 mt-2">Esta aplicación requiere una clave de licencia activa para procesar informes ECAPs y generar archivos de carga de relés.</p>
+            </div>
+            <div class="space-y-3">
+                <input type="password" id="input-app-pass" placeholder="Ingresa tu clave de acceso / licencia" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-center text-gray-200 focus:border-amber-500 focus:outline-none font-mono">
+                <button type="button" onclick="verifyAppPass()" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-gray-950 font-bold rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
+                    Ingresar a la Plataforma ⚡
+                </button>
+            </div>
+            <p id="txt-app-pass-error" class="text-xs text-red-400 hidden font-mono">Clave de licencia no válida. Contacta a Agencia Vela para cotizar un plan.</p>
+            <div class="border-t border-gray-850 pt-4 text-[11px] text-gray-500">
+                ¿No tienes acceso? <a href="https://somosvela.cl/?openChat=true" target="_blank" class="text-amber-400 font-semibold hover:underline">Cotizar demo con nuestro Vendedor IA ✨</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-gray-800 bg-gray-900/60 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-gray-950 font-bold shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-bolt text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        VELA <span class="text-amber-500 font-medium">PROTECTION AGENT</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">Plataforma de Auditoría de ECAP & Parametrización Multi-Agente</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="px-3 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Multi-Agent Engine v1.0 Active
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main id="app-main-content" class="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8 blur-md pointer-events-none">
+        
+        <!-- Top Section: Upload, Custom Rules & Agent Live Terminal -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left: Ingesta Principal, DIgSILENT & Reglas Complementarias -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- 1. Drag & Drop Upload Zone Principal (Informe ECAP) -->
+                <div class="glass-card rounded-2xl p-6 shadow-xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-file-pdf text-amber-500"></i> 1. Informe ECAP Principal (PDF)
+                        </h2>
+                        <span class="text-[11px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded font-mono">Requerido</span>
+                    </div>
+
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-700 hover:border-amber-500/50 transition-colors rounded-xl p-5 text-center cursor-pointer bg-gray-900/40 relative">
+                        <input type="file" id="input-pdf" accept=".pdf" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-amber-500 mb-1 animate-bounce"></i>
+                        <p class="text-xs font-semibold text-gray-200" id="txt-ecap-filename">Arrastra el informe PDF del ECAP aquí</p>
+                        <p class="text-[11px] text-gray-400">Soporta estudios pesados (Datacenter, Solar, Eólico)</p>
+                    </div>
+                </div>
+
+                <!-- 2. Carga de Archivo de Simulación DIgSILENT PowerFactory (Opcional) -->
+                <div class="glass-card rounded-2xl p-6 shadow-xl space-y-3 border border-orange-500/30 bg-orange-950/10">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-semibold text-orange-400 flex items-center gap-2">
+                            <i class="fa-solid fa-bolt-lightning text-orange-500"></i> 2. Simulación DIgSILENT PowerFactory
+                        </h2>
+                        <span class="text-[10px] text-gray-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">Auditoría de Origen</span>
+                    </div>
+                    <p class="text-xs text-gray-400">Carga el proyecto exportado (.pfd, .dz, .json, .dgs, .xml) para auditar la simulación nativa vs el PDF:</p>
+                    <input type="file" id="input-digsilent" accept=".dz,.json,.xml,.dgs,.pfd" class="hidden">
+                    <button type="button" onclick="document.getElementById('input-digsilent').click()" class="w-full py-2 bg-gray-950 hover:bg-gray-850 text-gray-300 rounded-xl border border-gray-800 text-xs flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-file-code text-orange-500"></i> Adjuntar Proyecto DIgSILENT PowerFactory
+                    </button>
+                    <span id="txt-digsilent-filename" class="text-[11px] text-orange-400 block font-mono">Sin proyecto DIgSILENT adjunto</span>
+                </div>
+
+                <!-- 3. Carga de Documentos Adjuntos & Links de Reglas Especiales -->
+                <div class="glass-card rounded-2xl p-6 shadow-xl space-y-4 border border-amber-500/20">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-semibold text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-folder-plus text-amber-500"></i> 3. Documentos & Links de Reglas Extras
+                        </h2>
+                        <span class="text-[10px] text-gray-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Custom Rules</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">
+                            <i class="fa-solid fa-paperclip text-gray-400"></i> Cargar PDFs Complementarios (Criterios E-Voltage / Bases):
+                        </label>
+                        <input type="file" id="input-rule-files" accept=".pdf" multiple class="hidden">
+                        <button type="button" onclick="document.getElementById('input-rule-files').click()" class="w-full py-2 bg-gray-950 hover:bg-gray-850 text-gray-300 rounded-xl border border-gray-800 text-xs flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-file-arrow-up text-amber-500"></i> Adjuntar Documentos de Criterios (PDF)
+                        </button>
+                        <span id="txt-rule-files-count" class="text-[11px] text-emerald-400 mt-1 block font-mono">0 archivos de reglas adjuntos</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">
+                            <i class="fa-solid fa-link text-gray-400"></i> Links / URLs Regulatorias (CNE, CEN, Normas Web):
+                        </label>
+                        <input type="url" id="inp-rule-links" placeholder="https://coordinador.cl/norma-tecnica-2026.pdf" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-200 focus:border-amber-500 focus:outline-none font-mono">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">
+                            <i class="fa-solid fa-pen text-gray-400"></i> Reglas Específicas en Texto:
+                        </label>
+                        <textarea id="txt-custom-rules" rows="2" placeholder="Ej: TDM máximo 1.25. Exigir 51N en alimentadores de transformadores." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-200 focus:border-amber-500 focus:outline-none font-mono"></textarea>
+                    </div>
+
+                    <button type="button" id="btn-process-all" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-gray-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2 text-xs">
+                        <i class="fa-solid fa-play"></i> Iniciar Auditoría Multi-Agente Completa
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Right: Terminal en vivo del Trabajo Multi-Agente -->
+            <div class="lg:col-span-7 glass-card rounded-2xl p-6 shadow-xl space-y-3 flex flex-col">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-robot text-amber-500"></i> Trabajo Multi-Agente en Tiempo Real
+                    </h2>
+                    <span id="agent-status-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-gray-800 text-gray-400 font-mono">Standby</span>
+                </div>
+
+                <div id="agent-terminal" class="flex-1 bg-gray-950 rounded-xl p-4 border border-gray-850 font-mono text-xs text-emerald-400/90 overflow-y-auto min-h-[460px] max-h-[520px] space-y-1">
+                    <p class="text-gray-500">> Sistema listo. Selecciona los archivos y haz clic en "Iniciar Auditoría Multi-Agente Completa"...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Section: Resumen del Proyecto Auditado -->
+        <div id="section-results" class="hidden space-y-6">
+            
+            <!-- Banner Principal de Estado del Proyecto -->
+            <div id="banner-overall-status" class="glass-card rounded-2xl p-6 border-l-4 shadow-xl flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Dictamen Final de Pre-Comisionamiento</span>
+                    <h3 id="txt-overall-title" class="text-2xl font-bold mt-1">--</h3>
+                    <p id="txt-overall-desc" class="text-xs text-gray-300 mt-1">--</p>
+                </div>
+                <div class="flex gap-3">
+                    <button id="btn-generate-report" class="px-5 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 font-semibold text-xs border border-gray-700 flex items-center gap-2 transition">
+                        <i class="fa-solid fa-file-invoice text-amber-400"></i> Generar Informe Oficial PDF / RFI
+                    </button>
+                </div>
+            </div>
+
+            <!-- Listado de Relés / Paños Extraídos -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                    <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-microchip text-amber-500"></i> Relés y Paños Detectados en el Informe (<span id="txt-relay-count">0</span>)
+                    </h3>
+                    <span class="text-xs text-gray-400">Haz clic en un relé para previsualizar sus ajustes y estado de seguridad</span>
+                </div>
+
+                <!-- Grid de Tarjetas de Relé -->
+                <div id="container-relays" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Tarjetas insertadas por JS -->
+                </div>
+            </div>
+
+            <!-- Detalle y Auditoría del Relé Seleccionado -->
+            <div id="section-relay-detail" class="hidden glass-card rounded-2xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                    <div>
+                        <h3 id="detail-relay-title" class="text-lg font-bold text-white">--</h3>
+                        <p id="detail-relay-sub" class="text-xs text-gray-400">--</p>
+                    </div>
+                    <!-- Botones de Descarga Multi-Marca (Bloqueables por Seguridad Operativa) -->
+                    <div class="flex gap-2">
+                        <button id="btn-download-relay-csv" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg transition">
+                            <i class="fa-solid fa-file-csv"></i> EnerVista GE (.CSV)
+                        </button>
+                        <button id="btn-download-omicron-xrio" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg transition">
+                            <i class="fa-solid fa-microchip"></i> OMICRON (.XRIO)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Parámetros Extraídos -->
+                    <div class="lg:col-span-5 bg-gray-950 p-4 rounded-xl border border-gray-850 space-y-3 text-xs">
+                        <h4 class="font-semibold text-amber-400 border-b border-gray-850 pb-2">Matriz de Parámetros del ECAP</h4>
+                        <div id="detail-params-content" class="space-y-2 text-gray-300 font-mono">
+                            <!-- Inyectado por JS -->
+                        </div>
+                    </div>
+
+                    <!-- Hallazgos del Auditor -->
+                    <div class="lg:col-span-7 space-y-3">
+                        <h4 class="font-semibold text-gray-300 text-xs">Hallazgos del Auditor de Protecciones</h4>
+                        <div id="detail-findings-container" class="space-y-3">
+                            <!-- Inyectado por JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Banner Promocional de la Suite Vela Ingeniería -->
+    <section class="max-w-7xl mx-auto px-6 mb-8">
+        <div class="glass-card rounded-2xl p-6 border border-amber-500/30 bg-gradient-to-r from-gray-950 via-gray-900 to-gray-950 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 font-mono">
+                        SUITE VELA INGENIERÍA
+                    </span>
+                    <span class="text-xs text-gray-400">by Agencia Vela (WNPower Cloud)</span>
+                </div>
+                <h3 class="text-base font-bold text-white">
+                    Soluciones de Inteligencia Artificial para la Industria Eléctrica & Protecciones
+                </h3>
+                <p class="text-xs text-gray-300 max-w-3xl leading-relaxed">
+                    <strong>Vela Ingeniería</strong> es la suite industrial de <strong>Agencia Vela</strong> diseñada para auditar estudios de coordinación (ECAPs), automatizar parametrizaciones multi-marca (GE, SEL, OMICRON) y reducir más de un <strong>80% los tiempos de pre-comisionamiento</strong> sin margen de error humano en terreno.
+                </p>
+            </div>
+            <div class="shrink-0">
+                <a href="https://somosvela.cl" target="_blank" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-amber-400 text-xs font-bold rounded-xl border border-amber-500/30 transition flex items-center gap-2">
+                    <i class="fa-solid fa-globe"></i> Visitar Agencia Vela (WNPower Cloud)
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="border-t border-gray-800 bg-gray-900/60 py-6 text-center text-xs text-gray-400 space-y-1">
+        <p class="font-bold text-gray-200">VELA PROTECTION COPILOT &bull; Un producto de la suite <span class="text-amber-400">VELA INGENIERÍA</span></p>
+        <p>&copy; 2026 <strong>Agencia Vela</strong> & E-Voltage. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        const API_URL = window.location.origin + '/api';
+        const APP_LICENSE_PASS = "EVOLTAGE2026";
+        let currentEcapData = null;
+        let selectedRelayIndex = 0;
+        let selectedMainPdfFile = null;
+        let selectedDigsilentFile = null;
+
+        function checkAppAuth() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyParam = urlParams.get('key');
+            const savedKey = localStorage.getItem('vela_copilot_key');
+
+            if (keyParam === APP_LICENSE_PASS || savedKey === APP_LICENSE_PASS) {
+                unlockApp();
+            }
+        }
+
+        function verifyAppPass() {
+            const val = document.getElementById('input-app-pass').value.trim();
+            if (val === APP_LICENSE_PASS) {
+                localStorage.setItem('vela_copilot_key', APP_LICENSE_PASS);
+                unlockApp();
+            } else {
+                document.getElementById('txt-app-pass-error').classList.remove('hidden');
+            }
+        }
+
+        function unlockApp() {
+            document.getElementById('app-auth-modal').classList.add('hidden');
+            const main = document.getElementById('app-main-content');
+            main.classList.remove('blur-md', 'pointer-events-none');
+        }
+
+        checkAppAuth();
+
+        const inputPdf = document.getElementById('input-pdf');
+        const txtEcapFilename = document.getElementById('txt-ecap-filename');
+        const inputDigsilent = document.getElementById('input-digsilent');
+        const txtDigsilentFilename = document.getElementById('txt-digsilent-filename');
+        const inputRuleFiles = document.getElementById('input-rule-files');
+        const txtRuleFilesCount = document.getElementById('txt-rule-files-count');
+        const inpRuleLinks = document.getElementById('inp-rule-links');
+        const txtCustomRules = document.getElementById('txt-custom-rules');
+        const btnProcessAll = document.getElementById('btn-process-all');
+        
+        const terminal = document.getElementById('agent-terminal');
+        const agentBadge = document.getElementById('agent-status-badge');
+
+        function logTerminal(msg, type='info') {
+            const p = document.createElement('p');
+            const now = new Date().toLocaleTimeString();
+            let color = 'text-emerald-400';
+            if (type === 'agent') color = 'text-amber-400 font-semibold';
+            if (type === 'error') color = 'text-red-400';
+            p.className = color;
+            p.textContent = `[${now}] ${msg}`;
+            terminal.appendChild(p);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        inputPdf.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                selectedMainPdfFile = e.target.files[0];
+                txtEcapFilename.textContent = `ECAP Seleccionado: ${selectedMainPdfFile.name}`;
+                logTerminal(`📄 Seleccionado archivo ECAP: ${selectedMainPdfFile.name} (${(selectedMainPdfFile.size/(1024*1024)).toFixed(2)} MB)`);
+            }
+        });
+
+        inputDigsilent.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                selectedDigsilentFile = e.target.files[0];
+                txtDigsilentFilename.textContent = `DIgSILENT Adjunto: ${selectedDigsilentFile.name}`;
+                logTerminal(`⚡ Adjuntado archivo de simulación DIgSILENT: ${selectedDigsilentFile.name}`);
+            }
+        });
+
+        inputRuleFiles.addEventListener('change', (e) => {
+            const count = e.target.files.length;
+            txtRuleFilesCount.textContent = `${count} documento(s) de reglas adjunto(s)`;
+            logTerminal(`📎 Adjuntados ${count} documento(s) complementarios de reglas.`);
+        });
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgBorder = 'bg-gray-900/90 border-amber-500/50 text-amber-300';
+            let icon = 'fa-triangle-exclamation text-amber-400';
+            
+            if (type === 'error') {
+                bgBorder = 'bg-gray-900/90 border-red-500/60 text-red-300';
+                icon = 'fa-circle-exclamation text-red-400';
+            } else if (type === 'success') {
+                bgBorder = 'bg-gray-900/90 border-emerald-500/60 text-emerald-300';
+                icon = 'fa-circle-check text-emerald-400';
+            } else if (type === 'info') {
+                bgBorder = 'bg-gray-900/90 border-cyan-500/60 text-cyan-300';
+                icon = 'fa-circle-info text-cyan-400';
+            }
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3.5 rounded-2xl border backdrop-blur-xl shadow-2xl text-xs font-semibold transform transition-all duration-300 translate-x-12 opacity-0 ${bgBorder}`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base shrink-0"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-12', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        btnProcessAll.addEventListener('click', async () => {
+            if (!selectedMainPdfFile) {
+                showToast("Por favor selecciona primero el archivo PDF del ECAP Principal 📄", "warning");
+                return;
+            }
+
+            logTerminal(`Iniciando pipeline de auditoría integral...`);
+            agentBadge.textContent = 'Multi-Agent Working';
+            agentBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono animate-pulse';
+
+            const formData = new FormData();
+            formData.append('file', selectedMainPdfFile);
+
+            if (selectedDigsilentFile) {
+                formData.append('digsilent_file', selectedDigsilentFile);
+                logTerminal(`⚡ [Agente DIgSILENT]: Analizando modelo nativo ElmRelay y curvas de origen...`, 'agent');
+            }
+
+            if (inputRuleFiles.files.length > 0) {
+                for (let i = 0; i < inputRuleFiles.files.length; i++) {
+                    formData.append('rule_files', inputRuleFiles.files[i]);
+                }
+                logTerminal(`📎 [Agente RAG]: Indexando ${inputRuleFiles.files.length} documento(s) de reglas particulares...`, 'agent');
+            }
+
+            const links = inpRuleLinks.value.trim();
+            if (links) {
+                formData.append('rule_links', links);
+                logTerminal(`🔗 [Agente RAG]: Consultando link regulatorio: ${links}`, 'agent');
+            }
+
+            const customRulesText = txtCustomRules.value.trim();
+            if (customRulesText) {
+                formData.append('custom_rules', customRulesText);
+                logTerminal(`⚙️ [Agente Custom Rules]: Inyectando reglas escritas: "${customRulesText.substring(0, 50)}..."`, 'agent');
+            }
+
+            setTimeout(() => logTerminal("🤖 [Agente Parser]: Subiendo documento principal a Gemini 3.6 File API...", 'agent'), 400);
+            setTimeout(() => logTerminal("🔍 [Agente Auditor]: Evaluando tablas, simulación DIgSILENT, notas ITO, regulatorio CEN y Custom Rules...", 'agent'), 1500);
+
+            try {
+                const res = await fetch(`${API_URL}/upload-ecap`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const rawResponseText = await res.text();
+
+                if (!res.ok) {
+                    let errorMessage = `Error del servidor HTTP (${res.status})`;
+                    try {
+                        const errJson = JSON.parse(rawResponseText);
+                        if (errJson.detail) errorMessage = errJson.detail;
+                    } catch (e) {
+                        errorMessage = rawResponseText.substring(0, 150) || errorMessage;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                currentEcapData = JSON.parse(rawResponseText);
+
+                logTerminal(`🤖 [Agente Auditor]: Evaluación completada. Extraídos ${currentEcapData.summary.total_relays} relés/paños.`, 'agent');
+                if (currentEcapData.digsilent_loaded) {
+                    logTerminal(`⚡ [Agente DIgSILENT]: Auditoría de simulación de origen finalizada.`, 'agent');
+                }
+                logTerminal(`🏛️ [Agente CEN & Custom Rules]: Evaluadas observaciones de ITO, exigencias CEN y reglas de documentos adjuntos.`, 'agent');
+                logTerminal(`✅ Dictamen listo: ${currentEcapData.overall_status}`);
+
+                agentBadge.textContent = 'Audit Complete';
+                agentBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono';
+
+                renderEcapResults(currentEcapData);
+
+            } catch (err) {
+                const errMsg = (err && err.message) ? err.message : (typeof err === 'object' ? JSON.stringify(err) : String(err));
+                logTerminal(`❌ ${errMsg}`, 'error');
+                showToast(`Error en la auditoría: ${errMsg}`, "error");
+                agentBadge.textContent = 'Error';
+                agentBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 font-mono';
+            }
+        });
+
+        function renderEcapResults(data) {
+            document.getElementById('section-results').classList.remove('hidden');
+            document.getElementById('txt-relay-count').textContent = data.summary.total_relays;
+
+            const banner = document.getElementById('banner-overall-status');
+            const txtTitle = document.getElementById('txt-overall-title');
+            const txtDesc = document.getElementById('txt-overall-desc');
+
+            if (data.overall_status === 'REJECTED') {
+                banner.className = 'glass-card rounded-2xl p-6 border-l-4 border-red-500 shadow-xl flex items-center justify-between bg-red-950/20';
+                txtTitle.textContent = '🔴 RECHAZADO: INCOHERENCIAS CRÍTICAS';
+                txtTitle.className = 'text-2xl font-bold text-red-400 mt-1';
+                txtDesc.textContent = `Se hallaron ${data.summary.critical_errors} error(es) crítico(s) de cálculo o descalces con DIgSILENT/ITO/CEN/Custom Rules. DESCARGAS BLOQUEADAS.`;
+            } else if (data.overall_status === 'APPROVED_WITH_WARNINGS') {
+                banner.className = 'glass-card rounded-2xl p-6 border-l-4 border-amber-500 shadow-xl flex items-center justify-between bg-amber-950/20';
+                txtTitle.textContent = '⚠️ APROBADO CON ADVERTENCIAS';
+                txtTitle.className = 'text-2xl font-bold text-amber-400 mt-1';
+                txtDesc.textContent = `Estudio realizable con ${data.summary.warnings} advertencia(s) de dialecto o rango de hardware.`;
+            } else {
+                banner.className = 'glass-card rounded-2xl p-6 border-l-4 border-emerald-500 shadow-xl flex items-center justify-between bg-emerald-950/20';
+                txtTitle.textContent = '✅ 100% AUDITADO Y APTO PARA PROGRAMACIÓN';
+                txtTitle.className = 'text-2xl font-bold text-emerald-400 mt-1';
+                txtDesc.textContent = 'Todos los relés y paños coinciden con las especificaciones, leyes de coordinación y reglas del usuario.';
+            }
+
+            const container = document.getElementById('container-relays');
+            container.innerHTML = '';
+
+            data.relays.forEach((r, idx) => {
+                const s = r.settings;
+                const card = document.createElement('div');
+                let borderClass = 'border-gray-800 hover:border-amber-500/50';
+                let badgeClass = 'badge-approved';
+                let statusText = 'APROBADO';
+
+                if (r.status === 'REJECTED') {
+                    borderClass = 'border-red-500/30 bg-red-950/10 hover:border-red-500';
+                    badgeClass = 'badge-critical';
+                    statusText = 'RECHAZADO';
+                } else if (r.status === 'WARNING') {
+                    borderClass = 'border-amber-500/30 bg-amber-950/10 hover:border-amber-500';
+                    badgeClass = 'badge-warning';
+                    statusText = 'ADVERTENCIA';
+                }
+
+                card.className = `p-4 rounded-xl glass-card border ${borderClass} transition cursor-pointer space-y-3`;
+                card.onclick = () => selectRelay(idx);
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-sm text-gray-200">#${idx+1} ${s.feeder_id}</span>
+                        <span class="px-2 py-0.5 text-[10px] rounded-full font-mono ${badgeClass}">${statusText}</span>
+                    </div>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <p><i class="fa-solid fa-building text-amber-500"></i> ${s.substation_name}</p>
+                        <p><i class="fa-solid fa-microchip text-gray-500"></i> ${s.relay_brand} ${s.relay_model}</p>
+                        <p><i class="fa-solid fa-arrows-split-up-and-left text-gray-500"></i> RTC: ${s.ct_ratio.primary_a}/${s.ct_ratio.secondary_a}A</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            if (data.relays.length > 0) {
+                selectRelay(0);
+            }
+        }
+
+        function selectRelay(idx) {
+            selectedRelayIndex = idx;
+            const r = currentEcapData.relays[idx];
+            const s = r.settings;
+            const btnCsv = document.getElementById('btn-download-relay-csv');
+
+            document.getElementById('section-relay-detail').classList.remove('hidden');
+            document.getElementById('detail-relay-title').textContent = `Paño: ${s.feeder_id} (${s.relay_brand} ${s.relay_model})`;
+            document.getElementById('detail-relay-sub').textContent = `Subestación: ${s.substation_name} | RTC: ${s.ct_ratio.primary_a}/${s.ct_ratio.secondary_a}A`;
+
+            if (r.status === 'REJECTED') {
+                btnCsv.disabled = true;
+                btnCsv.className = 'px-4 py-2 bg-red-950/60 text-red-400 font-bold rounded-xl text-xs flex items-center gap-2 border border-red-500/40 cursor-not-allowed';
+                btnCsv.innerHTML = '<i class="fa-solid fa-lock"></i> 🔒 Descarga Bloqueada (Resuelve Observaciones Críticas)';
+            } else {
+                btnCsv.disabled = false;
+                btnCsv.className = 'px-4 py-2 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg transition cursor-pointer';
+                btnCsv.innerHTML = '<i class="fa-solid fa-file-csv"></i> Descargar Archivo EnerVista (.CSV)';
+            }
+
+            const pContainer = document.getElementById('detail-params-content');
+            const p51 = s.ansi_51_phase || {};
+            const g51 = s.ansi_51n_ground || {};
+
+            pContainer.innerHTML = `
+                <p><span class="text-gray-500">RTC:</span> ${s.ct_ratio.primary_a} / ${s.ct_ratio.secondary_a} A</p>
+                <div class="border-t border-gray-850 pt-2">
+                    <p class="text-amber-400 font-semibold mb-1">ANSI 51 (Sobrecorriente Fase)</p>
+                    <p><span class="text-gray-500">Pickup Primario:</span> ${p51.pickup_primary_a ?? 'N/A'} A</p>
+                    <p><span class="text-gray-500">Pickup Secundario:</span> ${p51.pickup_secondary_a ?? 'N/A'} A</p>
+                    <p><span class="text-gray-500">Curva:</span> ${p51.curve ?? 'N/A'}</p>
+                    <p><span class="text-gray-500">TDM/TMS:</span> ${p51.time_dial ?? 'N/A'}</p>
+                </div>
+                <div class="border-t border-gray-850 pt-2">
+                    <p class="text-amber-400 font-semibold mb-1">ANSI 51N (Sobrecorriente Tierra)</p>
+                    <p><span class="text-gray-500">Pickup Primario:</span> ${g51.pickup_primary_a ?? 'N/A'} A</p>
+                    <p><span class="text-gray-500">Pickup Secundario:</span> ${g51.pickup_secondary_a ?? 'N/A'} A</p>
+                    <p><span class="text-gray-500">Curva:</span> ${g51.curve ?? 'N/A'}</p>
+                    <p><span class="text-gray-500">TDM/TMS:</span> ${g51.time_dial ?? 'N/A'}</p>
+                </div>
+            `;
+
+            const fContainer = document.getElementById('detail-findings-container');
+            fContainer.innerHTML = '';
+
+            if (r.findings.length === 0) {
+                fContainer.innerHTML = `
+                    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-3">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                        <div>
+                            <span class="font-semibold block">Sin observaciones</span>
+                            Todos los cálculos primario/secundario, DIgSILENT, ITO, normativa CEN y Custom Rules coinciden exactamente.
+                        </div>
+                    </div>
+                `;
+            } else {
+                r.findings.forEach(f => {
+                    const isCrit = f.severity === 'CRITICAL';
+                    const card = document.createElement('div');
+                    card.className = `p-4 rounded-xl border ${isCrit ? 'border-red-500/30 bg-red-950/20' : 'border-amber-500/30 bg-amber-950/20'} space-y-2 text-xs`;
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between font-semibold">
+                            <span class="${isCrit ? 'text-red-400' : 'text-amber-400'}">[${f.severity}] ${f.title}</span>
+                            <span class="text-gray-500 font-mono">${f.affected_setting}</span>
+                        </div>
+                        <p class="text-gray-300">${f.description}</p>
+                        <p class="text-amber-300 font-mono bg-gray-950 p-2 rounded border border-gray-850">
+                            <strong>Recomendación:</strong> ${f.recommendation}
+                        </p>
+                    `;
+                    fContainer.appendChild(card);
+                });
+            }
+        }
+
+        document.getElementById('btn-download-relay-csv').addEventListener('click', async () => {
+            if (!currentEcapData) return;
+            const r = currentEcapData.relays[selectedRelayIndex];
+            if (r.status === 'REJECTED') {
+                showToast("🔒 Descarga Bloqueada por Seguridad Operativa: Debe resolver los hallazgos críticos antes de emitir la matriz de carga.", "error");
+                return;
+            }
+
+            const settings = r.settings;
+            const res = await fetch(`${API_URL}/export/ge-enervista`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+
+            const csvText = await res.text();
+            const blob = new Blob([csvText], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `EnerVista_${settings.substation_name}_${settings.feeder_id}.csv`.replace(/ /g, "_");
+            a.click();
+        });
+
+        document.getElementById('btn-download-omicron-xrio').addEventListener('click', async () => {
+            if (!currentEcapData) return;
+            const r = currentEcapData.relays[selectedRelayIndex];
+            if (r.status === 'REJECTED') {
+                alert('🔒 Descarga Bloqueada por Seguridad Operativa: Debe resolver los hallazgos críticos antes de emitir la plantilla OMICRON.');
+                return;
+            }
+
+            const settings = r.settings;
+            const res = await fetch(`${API_URL}/export/omicron-xrio`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+
+            const xrioText = await res.text();
+            const blob = new Blob([xrioText], { type: 'application/xml' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Omicron_${settings.substation_name}_${settings.feeder_id}.xrio`.replace(/ /g, "_");
+            a.click();
+        });
+
+        document.getElementById('btn-generate-report').addEventListener('click', async () => {
+            if (!currentEcapData) return;
+
+            const res = await fetch(`${API_URL}/report/html`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentEcapData)
+            });
+
+            const htmlReport = await res.text();
+            const blob = new Blob([htmlReport], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const win = window.open(url, '_blank');
+            if (win) {
+                win.focus();
+            }
+            showToast("Generando reporte certificado de pre-comisionamiento PDF...", "info");
+        });
+    </script>
+</body>
+</html>
